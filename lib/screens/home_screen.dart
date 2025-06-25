@@ -23,71 +23,75 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (result != null && result.files.single.path != null) {
       final filePath = result.files.single.path!;
+      print("📂 선택된 파일 경로: $filePath");
+
       final newMessages = await parseChatFile(filePath);
+      print("📦 파싱된 메시지 수: ${newMessages.length}");
 
       setState(() {
         messages.addAll(newMessages);
-        messages.sort((a, b) => a.timestamp.compareTo(b.timestamp)); // 시간순 정렬
+        messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        print("🧠 누적 메시지 수: ${messages.length}");
       });
+    } else {
+      print("🚫 파일 선택 취소됨 또는 경로 없음");
     }
   }
 
-void _showNoteDialog(ChatMessage msg) {
-  final controller = TextEditingController(text: msg.note ?? '');
+  void _showNoteDialog(ChatMessage msg) {
+    final controller = TextEditingController(text: msg.note ?? '');
 
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: const Text('메모 추가'),
-      content: TextField(
-        controller: controller,
-        decoration: const InputDecoration(hintText: '이 대화에 남기고 싶은 말'),
-        maxLines: 3,
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('메모 추가'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: '이 대화에 남기고 싶은 말'),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              setState(() {
+                msg.note = controller.text;
+              });
+              Navigator.pop(context);
+            },
+            child: const Text('저장'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            setState(() {
-              msg.note = controller.text;
-            });
-            Navigator.pop(context);
-          },
-          child: const Text('저장'),
-        ),
-      ],
-    ),
-  );
-}
-
-
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final visibleMessages = showOnlyFavorites
-    ? messages.where((m) => m.isFavorite).toList()
-    : messages;
+        ? messages.where((m) => m.isFavorite).toList()
+        : messages;
     return Scaffold(
       appBar: AppBar(
-                title: const Text('카톡 대화 뷰어'),
-                centerTitle: true,
-                actions: [
-                  IconButton(
-                    icon: Icon(
-                      showOnlyFavorites ? Icons.star : Icons.star_border,
-                    ),
-                    tooltip: showOnlyFavorites ? '전체 보기' : '즐겨찾기만 보기',
-                    onPressed: () {
-                      setState(() {
-                        showOnlyFavorites = !showOnlyFavorites;
-                      });
-                    },
-                  ),
-                ],
-              ),
+        title: const Text('카톡 대화 뷰어'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(
+              showOnlyFavorites ? Icons.star : Icons.star_border,
+            ),
+            tooltip: showOnlyFavorites ? '전체 보기' : '즐겨찾기만 보기',
+            onPressed: () {
+              setState(() {
+                showOnlyFavorites = !showOnlyFavorites;
+              });
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           const SizedBox(height: 12),
@@ -120,7 +124,6 @@ void _showNoteDialog(ChatMessage msg) {
                         ),
                       );
                     },
-
                   ),
           ),
         ],
