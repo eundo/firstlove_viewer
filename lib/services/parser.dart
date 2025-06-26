@@ -1,7 +1,9 @@
+import 'package:crypto/crypto.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:intl/intl.dart';
 import '../models/chat_message.dart';
+
 
 final _dateOnlyRegex = RegExp(r'^\d{4}년 \d{1,2}월 \d{1,2}일');
 final _messageRegex =
@@ -10,10 +12,18 @@ final _messageRegex =
 final List<String> myNicknames = ['회원님', '나'];
 final List<String> theirNicknames = ['히', '히히', '첫사랑이름'];
 
+
+String _generateHash(String sender, String content, DateTime timestamp) {
+  final raw = '$sender|$content|${timestamp.toIso8601String()}';
+  return sha256.convert(utf8.encode(raw)).toString();
+}
+
 Future<List<ChatMessage>> parseChatFile(String filePath) async {
   final file = File(filePath);
   final lines = await file.readAsLines(encoding: utf8);
   final List<ChatMessage> messages = [];
+
+
 
   for (final line in lines) {
     if (_messageRegex.hasMatch(line)) {
@@ -27,6 +37,7 @@ Future<List<ChatMessage>> parseChatFile(String filePath) async {
         sender: sender,
         content: content,
         timestamp: timestamp,
+        hash: _generateHash(sender, content, timestamp),
       ));
     }
   }

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import '../models/chat_message.dart';
+import 'package:intl/intl.dart';
 
 class ChatBubble extends StatelessWidget {
   final String sender;
   final String message;
   final bool isMine;
   final bool isFavorite;
-  final VoidCallback onFavoriteToggle;
-  final String? note; // <-- 추가
+  final String? note;
+  final DateTime timestamp;
 
   const ChatBubble({
     super.key,
@@ -14,81 +16,64 @@ class ChatBubble extends StatelessWidget {
     required this.message,
     required this.isMine,
     required this.isFavorite,
-    required this.onFavoriteToggle,
-    this.note, // <-- 추가
+    required this.timestamp,
+    this.note,
   });
+
+
+
+String _formatTime(DateTime dt) {
+  final hour = dt.hour.toString().padLeft(2, '0');
+  final minute = dt.minute.toString().padLeft(2, '0');
+  return '$hour:$minute';
+}
+
+
+
+// String _formatTime(DateTime ts) {
+//   final formatter = DateFormat('yyyy.MM.dd HH:mm');
+//   return formatter.format(ts);
+// }
+
 
   @override
   Widget build(BuildContext context) {
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
-      child: Column(
-        crossAxisAlignment: isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-            padding: const EdgeInsets.all(12),
-            constraints: const BoxConstraints(maxWidth: 280),
-            decoration: BoxDecoration(
-              color: isMine ? Colors.yellow[100] : Colors.grey[200],
-              borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isMine ? 16 : 0),
-                bottomRight: Radius.circular(isMine ? 0 : 16),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isMine ? Colors.blue[100] : Colors.grey[300],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment:
+              isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          children: [
+            Text(
+              message,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$sender • ${_formatTime(timestamp)}',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            if (note != null && note!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  '💬 $note',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
               ),
-            ),
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 28.0),
-                  child: Column(
-                    crossAxisAlignment:
-                        isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                    children: [
-                      if (!isMine)
-                        Text(
-                          sender,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      Text(
-                        message,
-                        style: const TextStyle(fontSize: 15),
-                      ),
-                      if (note != null && note!.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(
-                            '💬 $note',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onTap: onFavoriteToggle,
-                    child: Icon(
-                      isFavorite ? Icons.star : Icons.star_border,
-                      size: 18,
-                      color: Colors.orange,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

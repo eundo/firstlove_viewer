@@ -1,4 +1,6 @@
 import 'package:file_picker/file_picker.dart';
+import 'package:firstlove_viewer/screens/chat_search_delegate.dart';
+import 'package:firstlove_viewer/services/local_storage.dart';
 import 'package:flutter/material.dart';
 import '../models/chat_message.dart';
 import '../services/parser.dart';
@@ -14,6 +16,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   List<ChatMessage> messages = [];
   bool showOnlyFavorites = false;
+  final _scrollController = ScrollController();
+final storage = LocalStorage();
+  void _scrollToMessage(ChatMessage target) { 
+      final index = messages.indexOf(target);
+      if (index != -1) {
+        _scrollController.animateTo(
+          index * 80.0, // 메시지 높이 대략값 (필요시 조정)
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    }
 
   Future<void> _addChatFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -23,51 +37,64 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (result != null && result.files.single.path != null) {
       final filePath = result.files.single.path!;
-      print("📂 선택된 파일 경로: $filePath");
+      print('📂 선택된 파일 경로: $filePath');
 
       final newMessages = await parseChatFile(filePath);
-      print("📦 파싱된 메시지 수: ${newMessages.length}");
+      print('🪄 파싱된 메시지 수: ${newMessages.length}');
+
+      // ✅ 저장된 상태 불러오기
+      final favoriteMap = await storage.loadFavoriteStatuses();
+      final noteMap = await storage.loadNotes();
+
+      for (final msg in newMessages) {
+        msg.isFavorite = favoriteMap[msg.hash] ?? false;
+        msg.note = noteMap[msg.hash] ?? '';
+      }
 
       setState(() {
         messages.addAll(newMessages);
         messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
-        print("🧠 누적 메시지 수: ${messages.length}");
+        print('📌 누적 메시지 수: ${messages.length}');
       });
     } else {
-      print("🚫 파일 선택 취소됨 또는 경로 없음");
+      print('🚫 파일 선택 취소됨 또는 경로 없음');
     }
   }
 
-  void _showNoteDialog(ChatMessage msg) {
-    final controller = TextEditingController(text: msg.note ?? '');
 
-    showDialog(
+  void _showNoteDialog(ChatMessage msg) async {
+    final controller = TextEditingController(text: msg.note ?? '');
+    final result = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('메모 추가'),
+        title: const Text('메모'),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: '이 대화에 남기고 싶은 말'),
           maxLines: 3,
+          decoration: const InputDecoration(hintText: '메모를 입력하세요'),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, null),
             child: const Text('취소'),
           ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                msg.note = controller.text;
-              });
-              Navigator.pop(context);
-            },
+          TextButton(
+            onPressed: () => Navigator.pop(context, controller.text),
             child: const Text('저장'),
           ),
         ],
       ),
     );
+
+    if (result != null) {
+      setState(() {
+        msg.note = result;
+      });
+      final storage = LocalStorage();
+      await storage.saveNote(msg.hash, result);
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +117,18 @@ class _HomeScreenState extends State<HomeScreen> {
               });
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () async {
+              final result = await showSearch<ChatMessage?>(
+                context: context,
+                delegate: ChatSearchDelegate(messages),
+              );
+              if (result != null) {
+                _scrollToMessage(result);
+              }
+            },
+          ),
         ],
       ),
       body: Column(
@@ -109,21 +148,26 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemBuilder: (context, index) {
                       final msg = visibleMessages[index];
                       return GestureDetector(
-                        onLongPress: () => _showNoteDialog(msg),
+                        onLongPress: () async {
+                          setState(() {
+                            msg.isFavorite = !msg.isFavorite;
+                          });
+
+                          final storage = LocalStorage();
+                          await storage.saveFavoriteStatus(msg.hash, msg.isFavorite);
+                          _showNoteDialog(msg); // ✏️ 메모 다이얼로그
+                        },
                         child: ChatBubble(
                           sender: msg.sender,
                           message: msg.content,
                           isMine: isMyMessage(msg.sender),
                           isFavorite: msg.isFavorite,
-                          onFavoriteToggle: () {
-                            setState(() {
-                              msg.isFavorite = !msg.isFavorite;
-                            });
-                          },
+                          timestamp: msg.timestamp, // ✅ 이 줄 꼭 추가
                           note: msg.note,
                         ),
                       );
                     },
+                    controller: _scrollController,
                   ),
           ),
         ],
