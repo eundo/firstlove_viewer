@@ -13,7 +13,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => HomeScreenState();
 }
 
-class HomeScreenState  extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   List<ChatMessage> messages = [];
   bool showOnlyFavorites = false;
   final _scrollController = ScrollController();
@@ -27,17 +27,16 @@ class HomeScreenState  extends State<HomeScreen> {
     });
   }
 
-
-  void _scrollToMessage(ChatMessage target) { 
-      final index = messages.indexOf(target);
-      if (index != -1) {
-        _scrollController.animateTo(
-          index * 80.0, // 메시지 높이 대략값 (필요시 조정)
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
-      }
+  void _scrollToMessage(ChatMessage target) {
+    final index = messages.indexOf(target);
+    if (index != -1) {
+      _scrollController.animateTo(
+        index * 80.0, // 메시지 높이 대략값 (필요시 조정)
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
     }
+  }
 
   Future<void> _addChatFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -70,7 +69,6 @@ class HomeScreenState  extends State<HomeScreen> {
       print('🚫 파일 선택 취소됨 또는 경로 없음');
     }
   }
-
 
   void _showNoteDialog(ChatMessage msg) async {
     final controller = TextEditingController(text: msg.note ?? '');
@@ -105,21 +103,19 @@ class HomeScreenState  extends State<HomeScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final visibleMessages = showOnlyFavorites
         ? messages.where((m) => m.isFavorite).toList()
         : messages;
     return Scaffold(
+      backgroundColor: const Color(0xFFF8F8F8), // ✅ 카톡 느낌의 따뜻한 베이지 배경
       appBar: AppBar(
         title: const Text('카톡 대화 뷰어'),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(
-              showOnlyFavorites ? Icons.star : Icons.star_border,
-            ),
+            icon: Icon(showOnlyFavorites ? Icons.star : Icons.star_border),
             tooltip: showOnlyFavorites ? '전체 보기' : '즐겨찾기만 보기',
             onPressed: () {
               setState(() {
@@ -159,13 +155,44 @@ class HomeScreenState  extends State<HomeScreen> {
                       final msg = visibleMessages[index];
                       return GestureDetector(
                         onLongPress: () async {
-                          setState(() {
-                            msg.isFavorite = !msg.isFavorite;
-                          });
-
-                          final storage = LocalStorage();
-                          await storage.saveFavoriteStatus(msg.hash, msg.isFavorite);
-                          _showNoteDialog(msg); // ✏️ 메모 다이얼로그
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (context) {
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: Icon(
+                                      msg.isFavorite
+                                          ? Icons.star
+                                          : Icons.star_border,
+                                    ),
+                                    title: Text(
+                                      msg.isFavorite ? '즐겨찾기 해제' : '즐겨찾기 추가',
+                                    ),
+                                    onTap: () async {
+                                      Navigator.pop(context);
+                                      setState(() {
+                                        msg.isFavorite = !msg.isFavorite;
+                                      });
+                                      await storage.saveFavoriteStatus(
+                                        msg.hash,
+                                        msg.isFavorite,
+                                      );
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(Icons.edit_note),
+                                    title: const Text('메모 작성'),
+                                    onTap: () {
+                                      Navigator.pop(context);
+                                      _showNoteDialog(msg);
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
                         },
                         child: ChatBubble(
                           sender: msg.sender,
@@ -174,7 +201,7 @@ class HomeScreenState  extends State<HomeScreen> {
                           isFavorite: msg.isFavorite,
                           timestamp: msg.timestamp, // ✅ 이 줄 꼭 추가
                           note: msg.note,
-                            highlight: highlight, // ✅ 요 줄 추가
+                          highlight: highlight, // ✅ 요 줄 추가
                         ),
                       );
                     },

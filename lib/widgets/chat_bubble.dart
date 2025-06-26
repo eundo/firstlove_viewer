@@ -1,16 +1,15 @@
-import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import '../models/chat_message.dart';
-
+import '../utils/time_formatter.dart'; // 🕓 시간 포맷 함수
 
 class ChatBubble extends StatelessWidget {
   final String sender;
   final String message;
   final bool isMine;
   final bool isFavorite;
-  final String? note;
   final DateTime timestamp;
-  final String? highlight; // nullable
+  final String? note;
+  final String? highlight;
 
   const ChatBubble({
     super.key,
@@ -23,102 +22,113 @@ class ChatBubble extends StatelessWidget {
     this.highlight,
   });
 
-
-
-String _formatTime(DateTime dt) {
-  final hour = dt.hour.toString().padLeft(2, '0');
-  final minute = dt.minute.toString().padLeft(2, '0');
-  return '$hour:$minute';
-}
-
-
-List<TextSpan> _buildHighlightedText(String text, String keyword) {
-  final spans = <TextSpan>[];
-  final lowerText = text.toLowerCase();
-  final lowerKeyword = keyword.toLowerCase();
-
-  int start = 0;
-  int index;
-
-  while ((index = lowerText.indexOf(lowerKeyword, start)) != -1) {
-    if (index > start) {
-      spans.add(TextSpan(text: text.substring(start, index)));
-    }
-
-    spans.add(TextSpan(
-      text: text.substring(index, index + keyword.length),
-      style: const TextStyle(backgroundColor: Colors.yellow),
-    ));
-
-    start = index + keyword.length;
-  }
-
-  if (start < text.length) {
-    spans.add(TextSpan(text: text.substring(start)));
-  }
-
-  return spans;
-}
-
-// String _formatTime(DateTime ts) {
-//   final formatter = DateFormat('yyyy.MM.dd HH:mm');
-//   return formatter.format(ts);
-// }
-
-
   @override
   Widget build(BuildContext context) {
+    final bubbleColor = isMine ? const Color(0xFFDCF8C6) : Colors.white;
+    final textColor = Colors.black;
+    final timeText = timeFormatter.format(timestamp);
+
     return Align(
       alignment: isMine ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isMine ? Colors.blue[100] : Colors.grey[300],
-          borderRadius: BorderRadius.circular(12),
-        ),
         child: Column(
-          crossAxisAlignment:
-              isMine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: isMine
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
-            highlight != null && highlight!.isNotEmpty
-              ? RichText(
-                  text: TextSpan(
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isMine ? Colors.white : Colors.black,
+            if (!isMine)
+              Padding(
+                padding: const EdgeInsets.only(left: 4, bottom: 2),
+                child: Text(
+                  sender,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                if (!isMine)
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: bubbleColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: _buildMessageText(),
                     ),
-                    children: _buildHighlightedText(message, highlight!),
                   ),
-                )
-              : Text(
-                  message,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: isMine ? Colors.white : Colors.black,
+                if (!isMine) const SizedBox(width: 6),
+                Text(
+                  timeText,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+                if (isMine) const SizedBox(width: 6),
+                if (isMine)
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 8,
+                        horizontal: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: bubbleColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: _buildMessageText(),
+                    ),
                   ),
-                )
-                , // <- ✅ 이 줄 추가
-            const SizedBox(height: 4),
-            Text(
-              '$sender • ${_formatTime(timestamp)}',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ],
             ),
             if (note != null && note!.isNotEmpty)
               Padding(
-                padding: const EdgeInsets.only(top: 8.0),
+                padding: const EdgeInsets.only(top: 4),
                 child: Text(
-                  '💬 $note',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey,
-                    fontStyle: FontStyle.italic,
-                  ),
+                  '📝 $note',
+                  style: const TextStyle(fontSize: 12, color: Colors.purple),
                 ),
               ),
           ],
         ),
       ),
     );
+  }
+
+  Widget _buildMessageText() {
+    if (highlight != null && highlight!.isNotEmpty) {
+      final parts = message.split(
+        RegExp('(${RegExp.escape(highlight!)})', caseSensitive: false),
+      );
+      return RichText(
+        text: TextSpan(
+          children: parts.map((part) {
+            final isMatch = part.toLowerCase() == highlight!.toLowerCase();
+            return TextSpan(
+              text: part,
+              style: TextStyle(
+                fontSize: 14,
+                color: isMatch ? Colors.red : Colors.black,
+                height: 1.3,
+                fontWeight: isMatch ? FontWeight.bold : FontWeight.normal,
+              ),
+            );
+          }).toList(),
+        ),
+      );
+    } else {
+      return Text(
+        message,
+        style: const TextStyle(
+          fontSize: 14,
+          color: Colors.black,
+          height: 1.3, // 자간 줄이기
+        ),
+      );
+    }
   }
 }
