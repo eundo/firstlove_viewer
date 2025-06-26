@@ -10,14 +10,24 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState  extends State<HomeScreen> {
   List<ChatMessage> messages = [];
   bool showOnlyFavorites = false;
   final _scrollController = ScrollController();
-final storage = LocalStorage();
+  final storage = LocalStorage();
+
+  String? highlight; // ✅ 검색어 하이라이트 용
+
+  void clearHighlight() {
+    setState(() {
+      highlight = null;
+    });
+  }
+
+
   void _scrollToMessage(ChatMessage target) { 
       final index = messages.indexOf(target);
       if (index != -1) {
@@ -164,6 +174,7 @@ final storage = LocalStorage();
                           isFavorite: msg.isFavorite,
                           timestamp: msg.timestamp, // ✅ 이 줄 꼭 추가
                           note: msg.note,
+                            highlight: highlight, // ✅ 요 줄 추가
                         ),
                       );
                     },
