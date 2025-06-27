@@ -62,7 +62,11 @@ class HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         messages.addAll(newMessages);
-        messages.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+        messages.sort((a, b) {
+          final cmp = a.timestamp.compareTo(b.timestamp);
+          if (cmp != 0) return cmp;
+          return a.order.compareTo(b.order); // ✅ 시분 동일할 경우 원래 순서 유지
+        });
         print('📌 누적 메시지 수: ${messages.length}');
       });
     } else {

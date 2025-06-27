@@ -22,7 +22,7 @@ Future<List<ChatMessage>> parseChatFile(String filePath) async {
   final file = File(filePath);
   final lines = await file.readAsLines(encoding: utf8);
   final List<ChatMessage> messages = [];
-
+  int order = 0;
 
 
   for (final line in lines) {
@@ -38,6 +38,7 @@ Future<List<ChatMessage>> parseChatFile(String filePath) async {
         content: content,
         timestamp: timestamp,
         hash: _generateHash(sender, content, timestamp),
+        order: order++, // ✅ 순서 기록
       ));
     }
   }

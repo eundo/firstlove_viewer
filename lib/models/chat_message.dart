@@ -2,21 +2,19 @@ class ChatMessage {
   final String sender;
   final String content;
   final DateTime timestamp;
+  final String hash;
   bool isFavorite;
   String? note;
-  final String hash; // ✅ 해시 필드 추가
+
+  final int order; // ✅ 추가
 
   ChatMessage({
     required this.sender,
     required this.content,
     required this.timestamp,
+    required this.hash,
     this.isFavorite = false,
     this.note,
-    required this.hash, // ✅ 생성자에도 추가
+    required this.order, // ✅ 추가
   });
-
-  @override
-  String toString() {
-    return '[$timestamp] $sender: $content';
-  }
 }
