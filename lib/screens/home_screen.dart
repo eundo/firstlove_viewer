@@ -1,4 +1,8 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firstlove_viewer/models/chat_file_metadata.dart';
 import 'package:firstlove_viewer/screens/chat_search_delegate.dart';
 import 'package:firstlove_viewer/services/local_storage.dart';
 import 'package:flutter/material.dart';
@@ -7,8 +11,9 @@ import '../services/parser.dart';
 import '../widgets/chat_bubble.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final String filePath;
 
+  const HomeScreen({super.key, required this.filePath});
   @override
   State<HomeScreen> createState() => HomeScreenState();
 }
@@ -62,13 +67,30 @@ class HomeScreenState extends State<HomeScreen> {
 
       setState(() {
         messages.addAll(newMessages);
+        
         messages.sort((a, b) {
           final cmp = a.timestamp.compareTo(b.timestamp);
           if (cmp != 0) return cmp;
           return a.order.compareTo(b.order); // ✅ 시분 동일할 경우 원래 순서 유지
         });
+        
         print('📌 누적 메시지 수: ${messages.length}');
       });
+
+      String generateId(String path) {
+        return sha1.convert(utf8.encode(path)).toString();
+      }
+      await storage.upsertChatFileMetadata(
+        ChatFileMetadata(
+          id: generateId(filePath),
+          name: filePath.split('/').last,
+          path: filePath,
+          lastOpened:  DateTime.now(),
+        ),
+      );
+
+
+
     } else {
       print('🚫 파일 선택 취소됨 또는 경로 없음');
     }

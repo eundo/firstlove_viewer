@@ -1,5 +1,6 @@
 // lib/main.dart
 
+import 'package:firstlove_viewer/services/memory_box_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -27,7 +28,7 @@ class FirstLoveViewerApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: const MemoryBoxListScreen(), // ✅ 첫 진입 화면 변경
     );
   }
 }
