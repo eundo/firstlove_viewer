@@ -1,9 +1,8 @@
 // lib/main.dart
 
-import 'package:firstlove_viewer/services/memory_box_list_screen.dart';
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'screens/memory_box_list_screen.dart'; // 💡 MemoryBoxListScreen이 위치한 곳
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,15 +19,15 @@ class FirstLoveViewerApp extends StatelessWidget {
       title: 'FirstLove Viewer',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        fontFamily: 'NotoSansKR', // ✅ 폰트 지정
-        scaffoldBackgroundColor: const Color(0xFFF2F2F2), // ✅ 카톡스러운 밝은 배경
+        fontFamily: 'NotoSansKR',
+        scaffoldBackgroundColor: const Color(0xFFF2F2F2), // 💛 카카오톡 느낌 배경
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF9370DB), // 연보라 느낌
+          seedColor: const Color(0xFF9370DB), // 연보라 계열
           brightness: Brightness.light,
         ),
         useMaterial3: true,
       ),
-      home: const MemoryBoxListScreen(), // ✅ 첫 진입 화면 변경
+      home: const MemoryBoxListScreen(), // ✅ 시작화면으로 메모리 박스 목록
     );
   }
 }
